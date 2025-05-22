@@ -1,0 +1,31 @@
+name: Build & Deploy Jupyter Book 🪄
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Jupyter Book
+        run: pip install -U pip wheel jupyter-book
+
+      - name: Build HTML
+        run: jupyter-book build ./book
+
+      - name: Rsync to VPS (IPv6-ready)
+        uses: burnett01/rsync-deployments@v6
+        with:
+          switches: -azv --delete
+          path: book/_build/html/
+          remote_path: /var/www/datasciencemart.in
+          remote_host: ${{ secrets.VPS_HOST }}
+          remote_user: ${{ secrets.VPS_USER }}
+          remote_key: ${{ secrets.VPS_SSH_KEY }}
